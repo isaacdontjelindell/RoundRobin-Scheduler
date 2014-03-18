@@ -15,43 +15,69 @@ func main() {
     fmt.Println(procList)
 
     for _, proc := range(procList) {
-        switch {
-            case proc.Status == READY:
-                readyQueue <- proc
-            case proc.Status == RUN:
-                runQueue <- proc
-            case proc.Status == WAIT:
-                waitQueue <- proc
-        }
+        dispatch(proc, readyQueue, runQueue, waitQueue)
     }
 
-    for {
-        time.Sleep(time.Second)
-        tick(readyQueue, runQueue, waitQueue)
+    tick(readyQueue, runQueue, waitQueue)
+}
+
+func dispatch(p Proc, readyQueue chan Proc, runQueue chan Proc, waitQueue chan Proc) {
+    switch {
+        case p.Status == READY:
+            readyQueue <- p
+        case p.Status == RUN:
+            runQueue <- p
+        case p.Status == WAIT:
+            waitQueue <- p
     }
 }
 
+
 func tick(readyQueue chan Proc, runQueue chan Proc, waitQueue chan Proc) {
-    select {
-    case p := <-readyQueue:
-        fmt.Println(p)
-    default:
-        fmt.Println("[tick] nothing in ready queue")
+    fmt.Printf("Welcome to tick\n")
+
+    system_time := 0
+
+    for {
+        select {
+        case p := <-runQueue:
+            if p.StateTimeRemaining > 0 {
+                fmt.Printf("Process %s is running\n", p.Name)
+                p.StateTimeRemaining--
+                runQueue <- p
+            } else {
+                v := changeProcState(&p)
+                if v > 0 {
+                    fmt.Printf("Process %s is done\n", p.Name)
+                } else {
+                    dispatch(p, readyQueue, runQueue, waitQueue)
+                }
+            }
+        default:
+           fmt.Println("nothing in the runQueue")
+           readyProc := <-readyQueue
+           runQueue <- readyProc
+        }
+
+        select {
+        case p := <-waitQueue:
+            if p.StateTimeRemaining > 0 {
+                fmt.Printf("Process %s is waiting\n", p.Name)
+                p.StateTimeRemaining--
+                waitQueue <- p
+            } else {
+                changeProcState(&p) // don't care about return (wait -> done not possible)
+                fmt.Printf("Process %s is done waiting\n", p.Name)
+                dispatch(p, readyQueue, runQueue, waitQueue)
+            }
+        default:
+            fmt.Println("nothing in the waitQueue")
+        }
+
+        system_time++
+        time.Sleep(time.Second)
     }
 
-    select {
-    case p := <-waitQueue:
-        fmt.Println(p)
-    default:
-        fmt.Println("[tick] nothing in wait queue")
-    }
-
-    select {
-    case p := <-runQueue:
-        fmt.Println(p)
-    default:
-        fmt.Println("[tick] nothing in run queue")
-    }
 }
 
 

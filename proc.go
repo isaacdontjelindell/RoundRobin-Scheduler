@@ -15,15 +15,33 @@ type Proc struct {
 	StateTimeRemaining int
 }
 
-func changeProcState(proc *Proc) int {
-	if len(proc.Times) == 0 {
-		return 1
-	}
+func (p Proc) String() string {
+    s := fmt.Sprintf("%s: %d", p.Name, p.Status)
+    return s
+}
 
-	newStateTime := proc.Times[0]
-	proc.Times = proc.Times[1:] // remove from head
-	proc.StateTimeRemaining = newStateTime
-	return 1
+func changeProcState(proc *Proc) int {
+
+    if proc.Status == READY {
+        if len(proc.Times) == 0 {
+            return 1
+        }
+        newStateTime := proc.Times[0]
+        proc.Times = proc.Times[1:] // remove from head
+        proc.StateTimeRemaining = newStateTime
+        proc.Status = RUN
+    } else if proc.Status == RUN{
+        if len(proc.Times) == 0 {
+            return 1
+        }
+        newStateTime := proc.Times[0]
+        proc.Times = proc.Times[1:] // remove from head
+        proc.StateTimeRemaining = newStateTime
+        proc.Status = WAIT
+    } else if proc.Status == WAIT {
+        proc.Status = READY
+    }
+	return 0
 }
 
 func testProc() {
