@@ -13,6 +13,7 @@ type Proc struct {
 	Name               string
 	Times              []int
     RemainingStateTime int
+    Preempted          bool
 }
 
 func (p Proc) String() string {
@@ -22,6 +23,10 @@ func (p Proc) String() string {
 
 
 func (p *Proc) newProcState() int {
+    if p.Preempted {
+        p.Preempted = false
+        return 0
+    }
     if len(p.Times) == 0 {
         return 1
     }
