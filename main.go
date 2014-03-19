@@ -26,6 +26,7 @@ func main() {
 }
 
 func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
+    //for i := 0; i<40; i++ {
     for {
         if len(runningList) == 0 {
             // nothing running - try to get something from the ready queue
@@ -53,41 +54,48 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
             }
         }
 
+        removeInd := make([]int, 0)
         if !(len(waitingList) == 0) {
-            for i, proc := range(waitingList) {
-                proc.RemainingStateTime--
-                if proc.RemainingStateTime < 1 {
-                    p := waitingList[i]
-                    waitingList = waitingList[1:]
-                    readyList = append(readyList, p)
+            for i, _ := range waitingList {
+                waitingList[i].RemainingStateTime--
+                if waitingList[i].RemainingStateTime < 1 {
+                    removeInd = append(removeInd, i)
+                    //waitingList = waitingList[1:]
+                    //readyList = append(readyList, waitingList[i])
                 }
+            }
+            // there's got to be a better way of doing this 
+            for i:=0; i < len(removeInd); i++ {
+                p := waitingList[i]
+                waitingList = waitingList[1:]
+                readyList = append(readyList, p)
             }
         }
 
         printRunning(runningList)
         printWaiting(waitingList)
         printReady(readyList)
-        time.Sleep(time.Second)
+        time.Sleep(time.Second / 2)
 
     }
 }
 
 
 func printReady(readyList []Proc) {
-    for _, proc := range(readyList) {
-        fmt.Printf("        process %s is waiting (remaining: %d)\n", proc, proc.RemainingStateTime)
+    for _, proc := range readyList {
+        fmt.Printf("        %s is waiting (remaining: %d)\n", proc, proc.RemainingStateTime)
     }
 }
 
 func printRunning(runningList []Proc) {
-    for _, proc := range(runningList) {
-        fmt.Printf("process %s is running (remaining: %d)\n", proc, proc.RemainingStateTime)
+    for _, proc := range runningList {
+        fmt.Printf("%s is running (remaining: %d)\n", proc, proc.RemainingStateTime)
     }
 }
 
 func printWaiting(waitingList []Proc) {
-    for _, proc := range(waitingList) {
-        fmt.Printf("     process %s is doing IO (remaining: %d)\n", proc, proc.RemainingStateTime)
+    for _, proc := range waitingList {
+        fmt.Printf("    %s is doing IO (remaining: %d)\n", proc, proc.RemainingStateTime)
     }
 }
 
