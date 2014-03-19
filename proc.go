@@ -6,74 +6,28 @@ const (
 	READY = 0
 	RUN   = 1
 	WAIT  = 2
+    DONE  = 3
 )
 
 type Proc struct {
 	Name               string
-	Status             int
 	Times              []int
-	StateTimeRemaining int
+    RemainingStateTime int
 }
 
 func (p Proc) String() string {
-    s := fmt.Sprintf("%s: %d", p.Name, p.Status)
+    s := fmt.Sprintf("%s", p.Name)
     return s
 }
 
-func changeProcState(proc *Proc) int {
 
-    if proc.Status == READY {
-        if len(proc.Times) == 0 {
-            return 1
-        }
-        newStateTime := proc.Times[0]
-        proc.Times = proc.Times[1:] // remove from head
-        proc.StateTimeRemaining = newStateTime
-        proc.Status = RUN
-    } else if proc.Status == RUN{
-        if len(proc.Times) == 0 {
-            return 1
-        }
-        newStateTime := proc.Times[0]
-        proc.Times = proc.Times[1:] // remove from head
-        proc.StateTimeRemaining = newStateTime
-        proc.Status = WAIT
-    } else if proc.Status == WAIT {
-        proc.Status = READY
+func (p *Proc) newProcState() int {
+    if len(p.Times) == 0 {
+        return 1
     }
-	return 0
+    newStateTime := p.Times[0]
+    p.Times = p.Times[1:]
+    p.RemainingStateTime = newStateTime
+    return 0
 }
 
-func testProc() {
-	var p Proc
-	p.Name = "testp"
-	p.Status = READY
-	p.Times = []int{1, 2, 3, 4}
-	p.StateTimeRemaining = 1
-
-	fmt.Println(p.Name)
-	fmt.Println(p.Status)
-
-	changeProcState(&p)
-	fmt.Println(p.Times)
-	fmt.Println(p.StateTimeRemaining)
-
-	changeProcState(&p)
-	fmt.Println(p.Times)
-	fmt.Println(p.StateTimeRemaining)
-
-	changeProcState(&p)
-	fmt.Println(p.Times)
-	fmt.Println(p.StateTimeRemaining)
-
-	changeProcState(&p)
-	fmt.Println(p.Times)
-	fmt.Println(p.StateTimeRemaining)
-
-	v := changeProcState(&p)
-	if v > 0 {
-		fmt.Println("ERROR: no more state times")
-	}
-	fmt.Println(p.Times)
-	fmt.Println(p.StateTimeRemaining)
-}
