@@ -5,6 +5,7 @@ import (
     "time"
 )
 
+const CLOCK_SPEED = time.Second
 const QUANTUM = 10
 
 func main() {
@@ -27,6 +28,7 @@ func main() {
 
 func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
     //for i := 0; i<40; i++ {
+    quant := 0
     for {
         if len(runningList) == 0 {
             // nothing running - try to get something from the ready queue
@@ -39,18 +41,27 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
             }
         }
 
+        // if anything is running
         if !(len(runningList) == 0) {
-            runningList[0].RemainingStateTime--
-            if runningList[0].RemainingStateTime < 1 {
+            runningList[0].RemainingStateTime-- // clock tick
+            quant++
+
+            if runningList[0].RemainingStateTime < 1 {  // done running
+                quant = 0
                 v := runningList[0].newProcState()
-                if v == 1 {
+                if v == 1 { // if process doesn't need any more time
                     fmt.Printf("process %s is done\n", runningList[0])
-                    runningList = runningList[1:]
-                } else {
+                    runningList = runningList[1:] // drop it. TODO save finished procs
+                } else { // needs IO
                     p := runningList[0]
                     runningList = runningList[1:]
                     waitingList = append(waitingList, p)
                 }
+            } else if quant == QUANTUM { // quantum is up, preempt the running proc
+                p := runningList[0]
+                runningList = runningList[1:]
+                readyList = append(readyList, p)
+                quant = 0
             }
         }
 
@@ -59,12 +70,13 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
             for i, _ := range waitingList {
                 waitingList[i].RemainingStateTime--
                 if waitingList[i].RemainingStateTime < 1 {
-                    removeInd = append(removeInd, i)
+                    removeInd = append(removeInd, i) // save index of proc that needs IO
                     //waitingList = waitingList[1:]
                     //readyList = append(readyList, waitingList[i])
                 }
             }
-            // there's got to be a better way of doing this 
+            // There's got to be a better way of doing this
+            // These are procs that are done w/ IO, ready to run
             for i:=0; i < len(removeInd); i++ {
                 p := waitingList[i]
                 waitingList = waitingList[1:]
@@ -75,11 +87,10 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
         printRunning(runningList)
         printWaiting(waitingList)
         printReady(readyList)
-        time.Sleep(time.Second / 2)
+        time.Sleep(CLOCK_SPEED) // tick tock tick tock
 
     }
 }
-
 
 func printReady(readyList []Proc) {
     for _, proc := range readyList {
