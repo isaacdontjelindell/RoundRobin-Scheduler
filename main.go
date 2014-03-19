@@ -40,7 +40,7 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
 
         if !(len(runningList) == 0) {
             runningList[0].RemainingStateTime--
-            if runningList[0].RemainingStateTime == 0 {
+            if runningList[0].RemainingStateTime < 1 {
                 v := runningList[0].newProcState()
                 if v == 1 {
                     fmt.Printf("process %s is done\n", runningList[0])
