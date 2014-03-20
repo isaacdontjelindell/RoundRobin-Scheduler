@@ -29,6 +29,7 @@ func main() {
 
 func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
 	systemTime := 1
+    idleTime := 0
 	quant := 0
 
 	doneList := make([]Proc, 0)
@@ -48,8 +49,8 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
 		    readyList[i].WaitTime++
 		}
 
+        /* simulate an IO clock cycle - anything that's in an IO wait is one cycle closer to running */
 		removeInd := make([]int, 0)
-        // simulate an IO clock cycle - anything that's in an IO wait is one cycle closer to running
         for i, _ := range waitingList {
             waitingList[i].RemainingStateTime--
             if waitingList[i].RemainingStateTime < 1 {
@@ -66,7 +67,8 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
         }
 
 
-		// if anything is running
+		/* If anything is running, make it give it a tick. Also preempt any processes that have
+         * overrun their quantum */
 		if !(len(runningList) == 0) {
 			runningList[0].RemainingStateTime-- // clock tick
 			quant++
@@ -92,27 +94,37 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
 			}
 		}
 
+        /* Check if the system is done */
+		if len(readyList) == 0 && len(waitingList) == 0 && len(runningList) == 0 {
+			done = true
+		}
+
+        /* Nothing running - try to get something from the ready queue */
 		if len(runningList) == 0 {
-			// nothing running - try to get something from the ready queue
 			if !(len(readyList) == 0) {
 				proc := readyList[0]
 				readyList = readyList[1:]
 
 				proc.newProcState()
 				runningList = append(runningList, proc)
-			}
+			} else if !done {
+                // idle cycle
+                idleTime++
+            }
 		}
 
 		time.Sleep(CLOCK_SPEED) // tick tock tick tock
 
-		if len(readyList) == 0 && len(waitingList) == 0 && len(runningList) == 0 {
-			done = true
-		}
 	}
 
+    printMetrics(doneList, idleTime)
+}
+
+func printMetrics(doneList []Proc, idleTime int) {
 	for _, p := range doneList {
 		fmt.Printf("%s waited %d cycles.\n", p, p.WaitTime)
 	}
+    fmt.Printf("System had %d idle cycles.\n", idleTime)
 }
 
 func printReady(readyList []Proc) {
