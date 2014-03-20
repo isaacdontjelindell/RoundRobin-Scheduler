@@ -17,13 +17,12 @@ func main() {
     waitingList := make([]Proc, 0)
     readyList := make([]Proc, 0)
 
-    procList[0].newProcState() // yikes - unchecked operation
+    // prime a proc into the running state
+    procList[0].newProcState() // yikes - unchecked operation. What if no procs??
     runningList = append(runningList, procList[0])
     for _, proc := range procList[1:] {
         readyList = append(readyList, proc)
     }
-
-    fmt.Println(readyList)
 
     run(readyList, waitingList, runningList)
 }
@@ -32,8 +31,10 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
     systemTime := 1
     quant := 0
 
-    for {
-        fmt.Printf("%d:\n", systemTime )
+    done := false
+
+    for !done {
+        //fmt.Printf("%d:\n", systemTime ) // for debugging
         printRunning(runningList)
         printReady(readyList)
         printWaiting(waitingList)
@@ -46,16 +47,14 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
                 waitingList[i].RemainingStateTime--
                 if waitingList[i].RemainingStateTime < 1 {
                     removeInd = append(removeInd, i) // save index of proc that needs IO
-                    //waitingList = waitingList[1:]
-                    //readyList = append(readyList, waitingList[i])
                 }
             }
             // There's got to be a better way of doing this
             // These are procs that are done w/ IO, ready to run
             for i:=0; i < len(removeInd); i++ {
                 p := waitingList[i]
+                // cut out the i-th element from waitingList
                 waitingList = append(waitingList[:i], waitingList[i+1:]...)
-                //waitingList = waitingList[1:]
                 readyList = append(readyList, p)
             }
        }
@@ -97,24 +96,28 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
         }
 
         time.Sleep(CLOCK_SPEED) // tick tock tick tock
+
+        if len(readyList) == 0 && len(waitingList) == 0 && len(runningList) == 0 {
+            done = true
+        }
     }
 }
 
 func printReady(readyList []Proc) {
     for _, proc := range readyList {
-        fmt.Printf("            %s is waiting\n", proc)
+        fmt.Printf("        %s is waiting\n", proc)
     }
 }
 
 func printRunning(runningList []Proc) {
     for _, proc := range runningList {
-        fmt.Printf("    %s is running\n", proc)
+        fmt.Printf("%s is running\n", proc)
     }
 }
 
 func printWaiting(waitingList []Proc) {
     for _, proc := range waitingList {
-        fmt.Printf("        %s is doing IO\n", proc)
+        fmt.Printf("    %s is doing IO\n", proc)
     }
 }
 

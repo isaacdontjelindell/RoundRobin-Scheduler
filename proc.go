@@ -2,13 +2,6 @@ package main
 
 import "fmt"
 
-const (
-	READY = 0
-	RUN   = 1
-	WAIT  = 2
-    DONE  = 3
-)
-
 type Proc struct {
 	Name               string
 	Times              []int
