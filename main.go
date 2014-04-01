@@ -6,10 +6,10 @@ import (
 )
 
 const CLOCK_SPEED = time.Second / 30
-const QUANTUM = 10 // length of quantum before a process will be preempted
-var quant int = 0 // where we are in the current quantum
+const QUANTUM = 10    // length of quantum before a process will be preempted
+var quant int = 0     // where we are in the current quantum
 var done bool = false // is the simulation done (are all procs finished?)
-var idleTime int = 0 // how many idle cycles does the system have?
+var idleTime int = 0  // how many idle cycles does the system have?
 
 func main() {
 
@@ -31,7 +31,7 @@ func main() {
 }
 
 func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
-    systemTime := 1
+	systemTime := 1
 
 	doneList := make([]Proc, 0)
 
@@ -50,12 +50,12 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
 
 		/* simulate an IO clock cycle - anything that's in an IO wait is one cycle closer to running */
 		waitingList, readyList =
-            ioTick(waitingList, readyList)
+			ioTick(waitingList, readyList)
 
         /* If anything is running, make it tick. Also preempt any processes that have
          * overrun their quantum */
 		runningList, doneList, waitingList, readyList =
-            runningTick(runningList, doneList, waitingList, readyList)
+			runningTick(runningList, doneList, waitingList, readyList)
 
 		/* Check if the system is done */
 		if len(readyList) == 0 && len(waitingList) == 0 && len(runningList) == 0 {
@@ -63,9 +63,8 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
 		}
 
 		/* Nothing running - try to get something from the ready queue */
-        runningList, readyList =
-            getReadyProc(runningList, readyList)
-
+		runningList, readyList =
+			getReadyProc(runningList, readyList)
 
 		time.Sleep(CLOCK_SPEED) // tick tock tick tock
 
@@ -74,32 +73,30 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
 	printMetrics(doneList, idleTime)
 }
 
-
 /* Nothing running - try to get something from the ready queue */
 func getReadyProc(runningList []Proc, readyList []Proc) ([]Proc, []Proc) {
-    if len(runningList) == 0 {
-        if !(len(readyList) == 0) {
-            proc := readyList[0]
-            readyList = readyList[1:]
+	if len(runningList) == 0 {
+		if !(len(readyList) == 0) {
+			proc := readyList[0]
+			readyList = readyList[1:]
 
-            proc.newProcState()
-            fmt.Printf("%s enters running state\n", proc)
-            runningList = append(runningList, proc)
-        } else if !done {
-            idleTime++ // idle cycle
-        }
-    }
+			proc.newProcState()
+			fmt.Printf("%s enters running state\n", proc)
+			runningList = append(runningList, proc)
+		} else if !done {
+			idleTime++ // idle cycle
+		}
+	}
 
-    return runningList, readyList
+	return runningList, readyList
 }
-
 
 /* If anything is running, make it tick. Also preempt any processes that have
  * overrun their quantum */
 func runningTick(runningList []Proc,
-                    doneList []Proc,
-                    waitingList []Proc,
-                    readyList []Proc) ([]Proc, []Proc, []Proc, []Proc) {
+	doneList []Proc,
+	waitingList []Proc,
+	readyList []Proc) ([]Proc, []Proc, []Proc, []Proc) {
 	if !(len(runningList) == 0) {
 		runningList[0].RemainingStateTime-- // clock tick
 		quant++
@@ -125,9 +122,8 @@ func runningTick(runningList []Proc,
 		}
 	}
 
-    return runningList, doneList, waitingList, readyList
+	return runningList, doneList, waitingList, readyList
 }
-
 
 /* simulate an IO clock cycle - anything that's in an IO wait is one cycle closer to running */
 func ioTick(waitingList []Proc, readyList []Proc) ([]Proc, []Proc) {
@@ -150,7 +146,6 @@ func ioTick(waitingList []Proc, readyList []Proc) ([]Proc, []Proc) {
 	return waitingList, readyList
 }
 
-
 func printMetrics(doneList []Proc, idleTime int) {
 	for _, p := range doneList {
 		fmt.Printf("%s waited %d cycles.\n", p, p.WaitTime)
@@ -158,13 +153,11 @@ func printMetrics(doneList []Proc, idleTime int) {
 	fmt.Printf("System had %d idle cycles.\n", idleTime)
 }
 
-
 func printReady(readyList []Proc) {
 	for _, proc := range readyList {
 		fmt.Printf("        %s is waiting\n", proc)
 	}
 }
-
 
 func printRunning(runningList []Proc) {
 	for _, proc := range runningList {
@@ -172,13 +165,11 @@ func printRunning(runningList []Proc) {
 	}
 }
 
-
 func printWaiting(waitingList []Proc) {
 	for _, proc := range waitingList {
 		fmt.Printf("    %s is doing IO\n", proc)
 	}
 }
-
 
 func getInitialProcList() []Proc {
 	p1 := Proc{"P1", []int{7, 2, 9, 6, 10}, 0, false, 0}
