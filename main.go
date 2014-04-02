@@ -83,7 +83,7 @@ func getReadyProc(runningList []Proc, readyList []Proc) ([]Proc, []Proc) {
 			readyList = readyList[1:]
 
 			proc.newProcState()
-			fmt.Printf("%s enters running state\n", proc)
+			fmt.Printf("%s enters running state\n", proc.Name)
 			runningList = append(runningList, proc)
 		} else if !done {
 			idleTime++ // idle cycle
@@ -107,7 +107,7 @@ func runningTick(runningList []Proc,
 			quant = 0
 			v := runningList[0].newProcState()
 			if v == 1 { // if process doesn't need any more time
-				fmt.Printf("process %s is done\n", runningList[0])
+				fmt.Printf("process %s is done\n", runningList[0].Name)
 				doneList = append(doneList, runningList[0])
 				runningList = runningList[1:] // drop it.
 			} else { // needs IO
@@ -150,26 +150,26 @@ func ioTick(waitingList []Proc, readyList []Proc) ([]Proc, []Proc) {
 
 func printMetrics(doneList []Proc, idleTime int) {
 	for _, p := range doneList {
-		fmt.Printf("%s waited %d cycles.\n", p, p.WaitTime)
+		fmt.Printf("%s waited %d cycles.\n", p.Name, p.WaitTime)
 	}
 	fmt.Printf("System had %d idle cycles.\n", idleTime)
 }
 
 func printReady(readyList []Proc) {
 	for _, proc := range readyList {
-		fmt.Printf("        %s is waiting\n", proc)
+		fmt.Printf("        %s is waiting\n", proc.Name)
 	}
 }
 
 func printRunning(runningList []Proc) {
 	for _, proc := range runningList {
-		fmt.Printf("%s is running\n", proc)
+		fmt.Printf("%s is running\n", proc.Name)
     }
 }
 
 func printWaiting(waitingList []Proc) {
 	for _, proc := range waitingList {
-		fmt.Printf("    %s is doing IO\n", proc)
+		fmt.Printf("    %s is doing IO\n", proc.Name)
 	}
 }
 
@@ -195,20 +195,21 @@ func getInitialProcList() []Proc {
             name := "P" + strconv.Itoa(i+1)
             data := strings.Split(line, " ")
             times := make([]int, 0)
-            for _, d := range data {
+            priority, _ := strconv.Atoi(data[0])
+            for _, d := range data[1:] {
                 t, _ := strconv.Atoi(d)
                 times = append(times, t)
             }
 
-            p := Proc{name, times, 0, false, 0}
+            p := Proc{name, times, 0, false, 0, priority}
 
             ret = append(ret, p)
         }
 
     } else {
-        p1 := Proc{"P1", []int{7, 2, 9, 6, 10}, 0, false, 0}
-        p2 := Proc{"P2", []int{9, 4, 5, 3, 2}, 0, false, 0}
-        p3 := Proc{"P3", []int{12, 5, 16, 7, 4}, 0, false, 0}
+        p1 := Proc{"P1", []int{7, 2, 9, 6, 10}, 0, false, 0, 0}
+        p2 := Proc{"P2", []int{9, 4, 5, 3, 2}, 0, false, 0, 0}
+        p3 := Proc{"P3", []int{12, 5, 16, 7, 4}, 0, false, 0, 0}
 
         ret = append(ret, p1)
         ret = append(ret, p2)

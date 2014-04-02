@@ -8,10 +8,11 @@ type Proc struct {
 	RemainingStateTime int
 	Preempted          bool
 	WaitTime           int
+    Priority           int
 }
 
 func (p Proc) String() string {
-	s := fmt.Sprintf("%s", p.Name)
+    s := fmt.Sprintf("%s (prio: %d)", p.Name, p.Priority)
 	return s
 }
 
