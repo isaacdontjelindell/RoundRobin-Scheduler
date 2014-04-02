@@ -9,7 +9,7 @@ import (
     "io/ioutil"
 )
 
-const CLOCK_SPEED = time.Second / 30
+const CLOCK_SPEED = time.Second / 500
 const QUANTUM = 10    // length of quantum before a process will be preempted
 var quant int = 0     // where we are in the current quantum
 var done bool = false // is the simulation done (are all procs finished?)
