@@ -3,6 +3,10 @@ package main
 import (
 	"fmt"
 	"time"
+    "os"
+    "strconv"
+    "strings"
+    "io/ioutil"
 )
 
 const CLOCK_SPEED = time.Second / 30
@@ -94,9 +98,9 @@ func getReadyProc(runningList []Proc, readyList []Proc) ([]Proc, []Proc) {
 /* If anything is running, make it tick. Also preempt any processes that have
  * overrun their quantum */
 func runningTick(runningList []Proc,
-	doneList []Proc,
-	waitingList []Proc,
-	readyList []Proc) ([]Proc, []Proc, []Proc, []Proc) {
+                 doneList []Proc,
+	             waitingList []Proc,
+	             readyList []Proc) ([]Proc, []Proc, []Proc, []Proc) {
 	if !(len(runningList) == 0) {
 		runningList[0].RemainingStateTime-- // clock tick
 		quant++
@@ -162,7 +166,7 @@ func printReady(readyList []Proc) {
 func printRunning(runningList []Proc) {
 	for _, proc := range runningList {
 		fmt.Printf("%s is running\n", proc)
-	}
+    }
 }
 
 func printWaiting(waitingList []Proc) {
@@ -172,11 +176,44 @@ func printWaiting(waitingList []Proc) {
 }
 
 func getInitialProcList() []Proc {
-	p1 := Proc{"P1", []int{7, 2, 9, 6, 10}, 0, false, 0}
-	p2 := Proc{"P2", []int{9, 4, 5, 3, 2}, 0, false, 0}
-	p3 := Proc{"P3", []int{12, 5, 16, 7, 4}, 0, false, 0}
+    ret := make([]Proc, 0)
+    if len(os.Args) > 1 {
+        // assume Args[1] is a filename of procs
+        filename := os.Args[1]
 
-	ret := []Proc{p1, p2, p3}
+        content, err := ioutil.ReadFile(filename)
+        if err != nil {
+            fmt.Printf("Error reading file %s\n", filename)
+            os.Exit(1)
+        }
+        lines := strings.Split(string(content), "\n")
+
+        for i, line := range lines {
+            if strings.TrimSpace(line) == "" {
+                continue
+            }
+            name := "P" + strconv.Itoa(i+1)
+            data := strings.Split(line, " ")
+            times := make([]int, 0)
+            for _, d := range data {
+                t, _ := strconv.Atoi(d)
+                times = append(times, t)
+            }
+
+            p := Proc{name, times, 0, false, 0}
+
+            ret = append(ret, p)
+        }
+
+    } else {
+        p1 := Proc{"P1", []int{7, 2, 9, 6, 10}, 0, false, 0}
+        p2 := Proc{"P2", []int{9, 4, 5, 3, 2}, 0, false, 0}
+        p3 := Proc{"P3", []int{12, 5, 16, 7, 4}, 0, false, 0}
+
+        ret = append(ret, p1)
+        ret = append(ret, p2)
+        ret = append(ret, p3)
+    }
 
 	return ret
 }
