@@ -16,7 +16,6 @@ var done bool = false // is the simulation done (are all procs finished?)
 var idleTime int = 0  // how many idle cycles does the system have?
 
 func main() {
-
 	procList := getInitialProcList()
 	fmt.Println(procList)
 
@@ -71,7 +70,6 @@ func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
 			getReadyProc(runningList, readyList)
 
 		time.Sleep(CLOCK_SPEED) // tick tock tick tock
-
 	}
 
 	printMetrics(doneList, idleTime)
@@ -175,6 +173,8 @@ func printWaiting(waitingList []Proc) {
 	}
 }
 
+/* proc list can either come from a file with name specified by args[1]
+ * or, if a file isn't given, just make a couple of processes */
 func getInitialProcList() []Proc {
     ret := make([]Proc, 0)
     if len(os.Args) > 1 {
@@ -189,7 +189,7 @@ func getInitialProcList() []Proc {
         lines := strings.Split(string(content), "\n")
 
         for i, line := range lines {
-            if strings.TrimSpace(line) == "" {
+            if strings.TrimSpace(line) == "" {  // empty line
                 continue
             }
             name := "P" + strconv.Itoa(i+1)
