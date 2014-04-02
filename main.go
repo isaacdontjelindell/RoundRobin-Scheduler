@@ -27,7 +27,8 @@ func main() {
 	procList[0].newProcState() // yikes - unchecked operation. What if no procs??
 	runningList = append(runningList, procList[0])
 	for _, proc := range procList[1:] {
-		readyList = append(readyList, proc)
+		//readyList = append(readyList, proc) // TODO remove
+        readyList = addToReadyList(readyList, proc)
 	}
 
 	run(readyList, waitingList, runningList)
@@ -119,7 +120,8 @@ func runningTick(runningList []Proc,
 			p := runningList[0]
 			p.Preempted = true
 			runningList = runningList[1:]
-			readyList = append(readyList, p)
+			//readyList = append(readyList, p) // TODO remove
+            readyList = addToReadyList(readyList, p)
 			quant = 0
 		}
 	}
@@ -142,10 +144,19 @@ func ioTick(waitingList []Proc, readyList []Proc) ([]Proc, []Proc) {
 		p := waitingList[i]
 		// cut out the i-th element from waitingList
 		waitingList = append(waitingList[:i], waitingList[i+1:]...)
-		readyList = append(readyList, p)
+		//readyList = append(readyList, p) // TODO remove
+        readyList = addToReadyList(readyList, p)
 	}
 
 	return waitingList, readyList
+}
+
+
+func addToReadyList(readyList []Proc, proc Proc) ([]Proc) {
+
+    readyList = append(readyList, proc)
+
+    return readyList
 }
 
 func printMetrics(doneList []Proc, idleTime int) {
