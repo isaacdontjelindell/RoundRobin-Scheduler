@@ -19,7 +19,6 @@ var idleTime int = 0  // how many idle cycles does the system have?
 
 func main() {
 	procList := getInitialProcList()
-	fmt.Println(procList)
 
 	runningList := make([]Proc, 0)
 	waitingList := make([]Proc, 0)
@@ -28,11 +27,10 @@ func main() {
 	for _, proc := range procList {
         readyList = addToReadyList(readyList, proc)
 	}
-    fmt.Println(readyList)
+    fmt.Printf("readyList: %s\n", readyList)
 
     // prime a proc into the running state
-	//procList[0].newProcState() // yikes - unchecked operation. What if no procs??
-    p := readyList[0]
+    p := readyList[0] // assumes there's at least one proc - this would be a boring sim otherwise...
     p.newProcState()
     readyList = readyList[1:]
 	runningList = append(runningList, p)
@@ -162,14 +160,17 @@ func addToReadyList(readyList []Proc, proc Proc) ([]Proc) {
         if len(readyList) == 0 {
             readyList = append(readyList, proc)
         } else {
+            // find where we should insert this new proc (1 is highest priority)
             insertIndex := -1
             for i, p := range readyList {
                 if p.Priority > proc.Priority {
                     insertIndex = i
+                    break
                 }
             }
 
             if insertIndex == -1 {
+                // if we didn't find an insertion index, it must be lower than everything else
                 readyList = append(readyList, proc)
             } else {
                 // insert into list at insertIndex
