@@ -9,8 +9,10 @@ import (
     "io/ioutil"
 )
 
-const CLOCK_SPEED = time.Second / 500
-const QUANTUM = 10    // length of quantum before a process will be preempted
+const CLOCK_SPEED = time.Second / 30
+const QUANTUM = 10         // length of quantum before a process will be preempted
+const USE_PRIORITY = true  // respect process priority
+
 var quant int = 0     // where we are in the current quantum
 var done bool = false // is the simulation done (are all procs finished?)
 var idleTime int = 0  // how many idle cycles does the system have?
@@ -23,14 +25,19 @@ func main() {
 	waitingList := make([]Proc, 0)
 	readyList := make([]Proc, 0)
 
-	// prime a proc into the running state
-	procList[0].newProcState() // yikes - unchecked operation. What if no procs??
-	runningList = append(runningList, procList[0])
-	for _, proc := range procList[1:] {
-		//readyList = append(readyList, proc) // TODO remove
+	for _, proc := range procList {
         readyList = addToReadyList(readyList, proc)
 	}
+    fmt.Println(readyList)
 
+    // prime a proc into the running state
+	//procList[0].newProcState() // yikes - unchecked operation. What if no procs??
+    p := readyList[0]
+    p.newProcState()
+    readyList = readyList[1:]
+	runningList = append(runningList, p)
+
+    // start the simulation
 	run(readyList, waitingList, runningList)
 }
 
@@ -120,7 +127,6 @@ func runningTick(runningList []Proc,
 			p := runningList[0]
 			p.Preempted = true
 			runningList = runningList[1:]
-			//readyList = append(readyList, p) // TODO remove
             readyList = addToReadyList(readyList, p)
 			quant = 0
 		}
@@ -144,7 +150,6 @@ func ioTick(waitingList []Proc, readyList []Proc) ([]Proc, []Proc) {
 		p := waitingList[i]
 		// cut out the i-th element from waitingList
 		waitingList = append(waitingList[:i], waitingList[i+1:]...)
-		//readyList = append(readyList, p) // TODO remove
         readyList = addToReadyList(readyList, p)
 	}
 
@@ -153,8 +158,29 @@ func ioTick(waitingList []Proc, readyList []Proc) ([]Proc, []Proc) {
 
 
 func addToReadyList(readyList []Proc, proc Proc) ([]Proc) {
+    if USE_PRIORITY {
+        if len(readyList) == 0 {
+            readyList = append(readyList, proc)
+        } else {
+            insertIndex := -1
+            for i, p := range readyList {
+                if p.Priority > proc.Priority {
+                    insertIndex = i
+                }
+            }
 
-    readyList = append(readyList, proc)
+            if insertIndex == -1 {
+                readyList = append(readyList, proc)
+            } else {
+                // insert into list at insertIndex
+                readyList = append(readyList[:insertIndex],
+                    append([]Proc{proc}, readyList[insertIndex:]...)...)
+            }
+        }
+
+    } else {
+        readyList = append(readyList, proc)
+    }
 
     return readyList
 }
