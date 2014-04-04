@@ -259,5 +259,5 @@ func getInitialProcList() []Proc {
         ret = append(ret, p3)
     }
 
-	return ret
+    return ret
 }
