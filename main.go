@@ -9,13 +9,15 @@ import (
     "io/ioutil"
 )
 
-const CLOCK_SPEED = time.Second / 30
+//const CLOCK_SPEED = time.Second / 30
+const CLOCK_SPEED= 0
 const QUANTUM = 10         // length of quantum before a process will be preempted
 const USE_PRIORITY = true  // respect process priority
 
-var quant int = 0     // where we are in the current quantum
-var done bool = false // is the simulation done (are all procs finished?)
-var idleTime int = 0  // how many idle cycles does the system have?
+var quant int = 0          // where we are in the current quantum
+var done bool = false      // is the simulation done (are all procs finished)?
+var systemTime int = 0     // number of cycles since start of simulation
+var idleTime int = 0       // how many idle cycles does the system have?
 
 func main() {
 	procList := getInitialProcList()
@@ -30,7 +32,7 @@ func main() {
     fmt.Printf("readyList: %s\n", readyList)
 
     // prime a proc into the running state
-    p := readyList[0] // assumes there's at least one proc - this would be a boring sim otherwise...
+    p := readyList[0] // assumes there's at least one proc - this would be  boring otherwise...
     p.newProcState()
     readyList = readyList[1:]
 	runningList = append(runningList, p)
@@ -40,7 +42,7 @@ func main() {
 }
 
 func run(readyList []Proc, waitingList []Proc, runningList []Proc) {
-	systemTime := 1
+	systemTime++
 
 	doneList := make([]Proc, 0)
 
@@ -154,10 +156,10 @@ func ioTick(waitingList []Proc, readyList []Proc) ([]Proc, []Proc) {
 	return waitingList, readyList
 }
 
-
+/* naive priority queuing */
 func addToReadyList(readyList []Proc, proc Proc) ([]Proc) {
     if USE_PRIORITY {
-        if len(readyList) == 0 {
+        if len(readyList) == 0 { // if no other procs, proc is hightest priority
             readyList = append(readyList, proc)
         } else {
             // find where we should insert this new proc (1 is highest priority)
@@ -187,10 +189,13 @@ func addToReadyList(readyList []Proc, proc Proc) ([]Proc) {
 }
 
 func printMetrics(doneList []Proc, idleTime int) {
+    fmt.Println()
 	for _, p := range doneList {
 		fmt.Printf("%s waited %d cycles.\n", p.Name, p.WaitTime)
 	}
-	fmt.Printf("System had %d idle cycles.\n", idleTime)
+    fmt.Println()
+    fmt.Printf("Total system time: %d\n", systemTime)
+    fmt.Printf("Idle cycles: %d\n", idleTime)
 }
 
 func printReady(readyList []Proc) {
@@ -212,7 +217,7 @@ func printWaiting(waitingList []Proc) {
 }
 
 /* proc list can either come from a file with name specified by args[1]
- * or, if a file isn't given, just make a couple of processes */
+ * or, if a file isn't given, just make a few processes */
 func getInitialProcList() []Proc {
     ret := make([]Proc, 0)
     if len(os.Args) > 1 {
