@@ -9,6 +9,7 @@ type Proc struct {
 	Preempted          bool
 	WaitTime           int
     Priority           int
+    TurnaroundTime     int
 }
 
 func (p Proc) String() string {

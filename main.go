@@ -9,10 +9,11 @@ import (
     "io/ioutil"
 )
 
-//const CLOCK_SPEED = time.Second / 30
-const CLOCK_SPEED= 0
-const QUANTUM = 10         // length of quantum before a process will be preempted
-const USE_PRIORITY = true  // respect process priority
+const CLOCK_SPEED = time.Second / 30
+//const CLOCK_SPEED= 0
+const QUANTUM = 10          // length of quantum before a process will be preempted
+//const USE_PRIORITY = true // respect process priority
+const USE_PRIORITY = false  // respect process priority
 
 var quant int = 0          // where we are in the current quantum
 var done bool = false      // is the simulation done (are all procs finished)?
@@ -116,6 +117,7 @@ func runningTick(runningList []Proc,
 			v := runningList[0].newProcState()
 			if v == 1 { // if process doesn't need any more time
 				fmt.Printf("process %s is done\n", runningList[0].Name)
+                runningList[0].TurnaroundTime = systemTime
 				doneList = append(doneList, runningList[0])
 				runningList = runningList[1:] // drop it.
 			} else { // needs IO
@@ -191,7 +193,7 @@ func addToReadyList(readyList []Proc, proc Proc) ([]Proc) {
 func printMetrics(doneList []Proc, idleTime int) {
     fmt.Println()
 	for _, p := range doneList {
-		fmt.Printf("%s waited %d cycles.\n", p.Name, p.WaitTime)
+		fmt.Printf("%s waited %d cycles and had a turnaround time of %d cycles.\n", p.Name, p.WaitTime, p.TurnaroundTime)
 	}
     fmt.Println()
     fmt.Printf("Total system time: %d\n", systemTime)
@@ -244,15 +246,15 @@ func getInitialProcList() []Proc {
                 times = append(times, t)
             }
 
-            p := Proc{name, times, 0, false, 0, priority}
+            p := Proc{name, times, 0, false, 0, priority, 0}
 
             ret = append(ret, p)
         }
 
     } else {
-        p1 := Proc{"P1", []int{7, 2, 9, 6, 10}, 0, false, 0, 0}
-        p2 := Proc{"P2", []int{9, 4, 5, 3, 2}, 0, false, 0, 0}
-        p3 := Proc{"P3", []int{12, 5, 16, 7, 4}, 0, false, 0, 0}
+        p1 := Proc{"P1", []int{7, 2, 9, 6, 10}, 0, false, 0, 0, 0}
+        p2 := Proc{"P2", []int{9, 4, 5, 3, 2}, 0, false, 0, 0, 0}
+        p3 := Proc{"P3", []int{12, 5, 16, 7, 4}, 0, false, 0, 0, 0}
 
         ret = append(ret, p1)
         ret = append(ret, p2)
