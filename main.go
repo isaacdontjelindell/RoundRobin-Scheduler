@@ -9,8 +9,8 @@ import (
     "io/ioutil"
 )
 
-const CLOCK_SPEED = time.Second / 30
-//const CLOCK_SPEED= 0
+//const CLOCK_SPEED = time.Second / 30
+const CLOCK_SPEED= 0
 const QUANTUM = 10          // length of quantum before a process will be preempted
 //const USE_PRIORITY = true // respect process priority
 const USE_PRIORITY = false  // respect process priority
@@ -192,12 +192,21 @@ func addToReadyList(readyList []Proc, proc Proc) ([]Proc) {
 
 func printMetrics(doneList []Proc, idleTime int) {
     fmt.Println()
+    avgTurnaroundTime := 0
+    avgWaitTime := 0
 	for _, p := range doneList {
 		fmt.Printf("%s waited %d cycles and had a turnaround time of %d cycles.\n", p.Name, p.WaitTime, p.TurnaroundTime)
+        avgTurnaroundTime += p.TurnaroundTime
+        avgWaitTime += p.WaitTime
 	}
+    avgTurnaroundTime /= len(doneList)
+    avgWaitTime /= len(doneList)
+
     fmt.Println()
     fmt.Printf("Total system time: %d\n", systemTime)
     fmt.Printf("Idle cycles: %d\n", idleTime)
+    fmt.Printf("Average turnaround time: %d\n", avgTurnaroundTime)
+    fmt.Printf("Average wait time: %d\n", avgWaitTime)
 }
 
 func printReady(readyList []Proc) {
