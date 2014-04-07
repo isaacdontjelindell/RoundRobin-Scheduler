@@ -7,18 +7,19 @@ import (
     "strconv"
     "strings"
     "io/ioutil"
+    "flag"
 )
 
-//const CLOCK_SPEED = time.Second / 30
-const CLOCK_SPEED= 0
-const QUANTUM = 10          // length of quantum before a process will be preempted
-//const USE_PRIORITY = true // respect process priority
-const USE_PRIORITY = false  // respect process priority
+const CLOCK_SPEED = time.Second / 30
+//const CLOCK_SPEED= 0
+const QUANTUM = 10           // length of quantum before a process will be preempted
 
-var quant int = 0          // where we are in the current quantum
-var done bool = false      // is the simulation done (are all procs finished)?
-var systemTime int = 0     // number of cycles since start of simulation
-var idleTime int = 0       // how many idle cycles does the system have?
+var USE_PRIORITY bool = false // respect process priority
+
+var quant int = 0            // where we are in the current quantum
+var done bool = false        // is the simulation done (are all procs finished)?
+var systemTime int = 0       // number of cycles since start of simulation
+var idleTime int = 0         // how many idle cycles does the system have?
 
 func main() {
 	procList := getInitialProcList()
@@ -230,10 +231,16 @@ func printWaiting(waitingList []Proc) {
 /* proc list can either come from a file with name specified by args[1]
  * or, if a file isn't given, just make a few processes */
 func getInitialProcList() []Proc {
+    prio := flag.Bool("p", false, "a bool flag")
+    flag.Parse()
+    if *prio {
+        USE_PRIORITY = true
+    }
+
     ret := make([]Proc, 0)
-    if len(os.Args) > 1 {
+    if len(flag.Args()) > 0 {
         // assume Args[1] is a filename of procs
-        filename := os.Args[1]
+        filename := flag.Args()[0]
 
         content, err := ioutil.ReadFile(filename)
         if err != nil {
