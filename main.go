@@ -223,13 +223,13 @@ func printReady(readyList []Proc) {
 
 func printRunning(runningList []Proc) {
 	for _, proc := range runningList {
-		fmt.Printf("%s is running (remStateTime: %d)\n", proc.Name, proc.RemainingStateTime)
+		fmt.Printf("%s is running\n", proc.Name)
 	}
 }
 
 func printWaiting(waitingList []Proc) {
 	for _, proc := range waitingList {
-		fmt.Printf("    %s is doing IO (remStateTime: %d)\n", proc.Name, proc.RemainingStateTime)
+		fmt.Printf("    %s is doing IO\n", proc.Name)
 	}
 }
 
