@@ -1,25 +1,25 @@
 package main
 
 import (
-    "fmt"
-    "time"
-    "os"
-    "strconv"
-    "strings"
-    "io/ioutil"
-    "flag"
+	"flag"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
-const CLOCK_SPEED = time.Second / 30
-//const CLOCK_SPEED= 0
-const QUANTUM = 10           // length of quantum before a process will be preempted
+//const CLOCK_SPEED = time.Second / 30
+const CLOCK_SPEED = 0
+const QUANTUM = 10 // length of quantum before a process will be preempted
 
 var USE_PRIORITY bool = false // respect process priority
 
-var quant int = 0            // where we are in the current quantum
-var done bool = false        // is the simulation done (are all procs finished)?
-var systemTime int = 0       // number of cycles since start of simulation
-var idleTime int = 0         // how many idle cycles does the system have?
+var quant int = 0      // where we are in the current quantum
+var done bool = false  // is the simulation done (are all procs finished)?
+var systemTime int = 0 // number of cycles since start of simulation
+var idleTime int = 0   // how many idle cycles does the system have?
 
 func main() {
 	procList := getInitialProcList()
@@ -29,17 +29,17 @@ func main() {
 	readyList := make([]Proc, 0)
 
 	for _, proc := range procList {
-        readyList = addToReadyList(readyList, proc)
+		readyList = addToReadyList(readyList, proc)
 	}
-    fmt.Printf("readyList: %s\n", readyList)
+	fmt.Printf("readyList: %s\n", readyList)
 
-    // prime a proc into the running state
-    p := readyList[0] // assumes there's at least one proc - this would be  boring otherwise...
-    p.newProcState()
-    readyList = readyList[1:]
+	// prime a proc into the running state
+	p := readyList[0] // assumes there's at least one proc - this would be boring otherwise...
+	p.newProcState()
+	readyList = readyList[1:]
 	runningList = append(runningList, p)
 
-    // start the simulation
+	// start the simulation
 	run(readyList, waitingList, runningList)
 }
 
@@ -106,9 +106,9 @@ func getReadyProc(runningList []Proc, readyList []Proc) ([]Proc, []Proc) {
 /* If anything is running, make it tick. Also preempt any processes that have
  * overrun their quantum */
 func runningTick(runningList []Proc,
-                 doneList []Proc,
-	             waitingList []Proc,
-	             readyList []Proc) ([]Proc, []Proc, []Proc, []Proc) {
+	doneList []Proc,
+	waitingList []Proc,
+	readyList []Proc) ([]Proc, []Proc, []Proc, []Proc) {
 	if !(len(runningList) == 0) {
 		runningList[0].RemainingStateTime-- // clock tick
 		quant++
@@ -118,7 +118,7 @@ func runningTick(runningList []Proc,
 			v := runningList[0].newProcState()
 			if v == 1 { // if process doesn't need any more time
 				fmt.Printf("process %s is done\n", runningList[0].Name)
-                runningList[0].TurnaroundTime = systemTime
+				runningList[0].TurnaroundTime = systemTime
 				doneList = append(doneList, runningList[0])
 				runningList = runningList[1:] // drop it.
 			} else { // needs IO
@@ -130,7 +130,7 @@ func runningTick(runningList []Proc,
 			p := runningList[0]
 			p.Preempted = true
 			runningList = runningList[1:]
-            readyList = addToReadyList(readyList, p)
+			readyList = addToReadyList(readyList, p)
 			quant = 0
 		}
 	}
@@ -147,67 +147,72 @@ func ioTick(waitingList []Proc, readyList []Proc) ([]Proc, []Proc) {
 			removeInd = append(removeInd, i) // save index of proc that needs IO
 		}
 	}
-	// There's got to be a better way of doing this
+
 	// These are procs that are done w/ IO, ready to run
-	for i := 0; i < len(removeInd); i++ {
-		p := waitingList[i]
-		// cut out the i-th element from waitingList
-		waitingList = append(waitingList[:i], waitingList[i+1:]...)
-        readyList = addToReadyList(readyList, p)
+	m := make(map[int]bool)
+	for _, i := range removeInd {
+		m[i] = true
+	}
+	var newWaitingList []Proc
+	for i, p := range waitingList {
+		if !m[i] {
+			newWaitingList = append(newWaitingList, p)
+		} else {
+			readyList = append(readyList, p)
+		}
 	}
 
-	return waitingList, readyList
+	return newWaitingList, readyList
 }
 
 /* naive priority queuing */
-func addToReadyList(readyList []Proc, proc Proc) ([]Proc) {
-    if USE_PRIORITY {
-        if len(readyList) == 0 { // if no other procs, proc is hightest priority
-            readyList = append(readyList, proc)
-        } else {
-            // find where we should insert this new proc (1 is highest priority)
-            insertIndex := -1
-            for i, p := range readyList {
-                if p.Priority > proc.Priority {
-                    insertIndex = i
-                    break
-                }
-            }
+func addToReadyList(readyList []Proc, proc Proc) []Proc {
+	if USE_PRIORITY {
+		if len(readyList) == 0 { // if no other procs, proc is hightest priority
+			readyList = append(readyList, proc)
+		} else {
+			// find where we should insert this new proc (1 is highest priority)
+			insertIndex := -1
+			for i, p := range readyList {
+				if p.Priority > proc.Priority {
+					insertIndex = i
+					break
+				}
+			}
 
-            if insertIndex == -1 {
-                // if we didn't find an insertion index, it must be lower than everything else
-                readyList = append(readyList, proc)
-            } else {
-                // insert into list at insertIndex
-                readyList = append(readyList[:insertIndex],
-                    append([]Proc{proc}, readyList[insertIndex:]...)...)
-            }
-        }
+			if insertIndex == -1 {
+				// if we didn't find an insertion index, it must be lower than everything else
+				readyList = append(readyList, proc)
+			} else {
+				// insert into list at insertIndex
+				readyList = append(readyList[:insertIndex],
+					append([]Proc{proc}, readyList[insertIndex:]...)...)
+			}
+		}
+	} else {
+		readyList = append(readyList, proc)
+	}
 
-    } else {
-        readyList = append(readyList, proc)
-    }
-
-    return readyList
+	return readyList
 }
 
 func printMetrics(doneList []Proc, idleTime int) {
-    fmt.Println()
-    avgTurnaroundTime := 0
-    avgWaitTime := 0
+	fmt.Println()
+	avgTurnaroundTime := 0
+	avgWaitTime := 0
 	for _, p := range doneList {
 		fmt.Printf("%s waited %d cycles and had a turnaround time of %d cycles.\n", p.Name, p.WaitTime, p.TurnaroundTime)
-        avgTurnaroundTime += p.TurnaroundTime
-        avgWaitTime += p.WaitTime
+		avgTurnaroundTime += p.TurnaroundTime
+		avgWaitTime += p.WaitTime
 	}
-    avgTurnaroundTime /= len(doneList)
-    avgWaitTime /= len(doneList)
+	avgTurnaroundTime /= len(doneList)
+	avgWaitTime /= len(doneList)
 
-    fmt.Println()
-    fmt.Printf("Total system time: %d\n", systemTime)
-    fmt.Printf("Idle cycles: %d\n", idleTime)
-    fmt.Printf("Average turnaround time: %d\n", avgTurnaroundTime)
-    fmt.Printf("Average wait time: %d\n", avgWaitTime)
+	fmt.Println()
+	fmt.Printf("Total system time: %d\n", systemTime)
+	fmt.Printf("Idle cycles: %d\n", idleTime)
+	fmt.Printf("Average turnaround time: %d\n", avgTurnaroundTime)
+	fmt.Printf("Average wait time: %d\n", avgWaitTime)
 }
 
 func printReady(readyList []Proc) {
@@ -218,64 +223,64 @@ func printReady(readyList []Proc) {
 
 func printRunning(runningList []Proc) {
 	for _, proc := range runningList {
-		fmt.Printf("%s is running\n", proc.Name)
-    }
+		fmt.Printf("%s is running (remStateTime: %d)\n", proc.Name, proc.RemainingStateTime)
+	}
 }
 
 func printWaiting(waitingList []Proc) {
 	for _, proc := range waitingList {
-		fmt.Printf("    %s is doing IO\n", proc.Name)
+		fmt.Printf("    %s is doing IO (remStateTime: %d)\n", proc.Name, proc.RemainingStateTime)
 	}
 }
 
 /* proc list can either come from a file with name specified by args[1]
  * or, if a file isn't given, just make a few processes */
 func getInitialProcList() []Proc {
-    prio := flag.Bool("p", false, "a bool flag")
-    flag.Parse()
-    if *prio {
-        USE_PRIORITY = true
-    }
+	prio := flag.Bool("p", false, "a bool flag")
+	flag.Parse()
+	if *prio {
+		USE_PRIORITY = true
+	}
 
-    ret := make([]Proc, 0)
-    if len(flag.Args()) > 0 {
-        // assume Args[1] is a filename of procs
-        filename := flag.Args()[0]
+	ret := make([]Proc, 0)
+	if len(flag.Args()) > 0 {
+		// assume Args[1] is a filename of procs
+		filename := flag.Args()[0]
 
-        content, err := ioutil.ReadFile(filename)
-        if err != nil {
-            fmt.Printf("Error reading file %s\n", filename)
-            os.Exit(1)
-        }
-        lines := strings.Split(string(content), "\n")
+		content, err := ioutil.ReadFile(filename)
+		if err != nil {
+			fmt.Printf("Error reading file %s\n", filename)
+			os.Exit(1)
+		}
+		lines := strings.Split(string(content), "\n")
 
-        for i, line := range lines {
-            if strings.TrimSpace(line) == "" {  // empty line
-                continue
-            }
-            name := "P" + strconv.Itoa(i+1)
-            data := strings.Split(line, " ")
-            times := make([]int, 0)
-            priority, _ := strconv.Atoi(data[0])
-            for _, d := range data[1:] {
-                t, _ := strconv.Atoi(d)
-                times = append(times, t)
-            }
+		for i, line := range lines {
+			if strings.TrimSpace(line) == "" { // empty line
+				continue
+			}
+			name := "P" + strconv.Itoa(i+1)
+			data := strings.Split(line, " ")
+			times := make([]int, 0)
+			priority, _ := strconv.Atoi(data[0])
+			for _, d := range data[1:] {
+				t, _ := strconv.Atoi(d)
+				times = append(times, t)
+			}
 
-            p := Proc{name, times, 0, false, 0, priority, 0}
+			p := Proc{name, times, 0, false, 0, priority, 0}
 
-            ret = append(ret, p)
-        }
+			ret = append(ret, p)
+		}
 
-    } else {
-        p1 := Proc{"P1", []int{7, 2, 9, 6, 10}, 0, false, 0, 0, 0}
-        p2 := Proc{"P2", []int{9, 4, 5, 3, 2}, 0, false, 0, 0, 0}
-        p3 := Proc{"P3", []int{12, 5, 16, 7, 4}, 0, false, 0, 0, 0}
+	} else {
+		p1 := Proc{"P1", []int{7, 2, 9, 6, 10}, 0, false, 0, 1, 0}
+		p2 := Proc{"P2", []int{9, 4, 5, 3, 2}, 0, false, 0, 1, 0}
+		p3 := Proc{"P3", []int{12, 5, 16, 7, 4}, 0, false, 0, 1, 0}
 
-        ret = append(ret, p1)
-        ret = append(ret, p2)
-        ret = append(ret, p3)
-    }
+		ret = append(ret, p1)
+		ret = append(ret, p2)
+		ret = append(ret, p3)
+	}
 
-    return ret
+	return ret
 }
